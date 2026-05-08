@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware 
-from google import genai
-import os
+from huggingface_hub import InferenceClient
+import uvicorn
 
 app = FastAPI()
 
@@ -13,70 +13,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-client = genai.Client(api_key="AIzaSyCk_W5eeoO_tKOfUl67peRZramo343gKGw")
+# Plan C: Use Hugging Face (Public API)
+client = InferenceClient("mistralai/Mistral-7B-Instruct-v0.3")
 
 @app.get("/")
 def home():
-    return {"message": "The Career Chef is ready!"}
+    return {"message": "Hugging Face Chef is ready!"}
 
 @app.post("/predict")
 def predict(data: dict):
     QUESTIONS = [
-  "Would you rather fix a broken physical object, or a broken relationship between two people?",
-  "Does a blank spreadsheet make you feel organized and powerful, or bored and restricted?",
-  "In a high-stakes meeting, are you the one pitching the vision, or the one taking notes?",
-  "Would you prefer 8 hours with technical manuals or a canvas and paint?",
-  "Do you want to see the 'Big Picture' first, or step-by-step instructions?",
-  "Does 'ambiguity' at work give you a thrill or a headache?",
-  "Would you rather be an anonymous inventor or the famous face of a brand?",
-  "Do you check the data/facts first, or check how the team is feeling?",
-  "If you won the lottery, would you still enjoy the planning, the doing, or the selling?",
-  "Do you prefer to be judged on your individual work or your success as a leader?"
-]
-
-
+        "Would you rather fix a broken physical object, or a broken relationship between two people?",
+        "Does a blank spreadsheet make you feel organized and powerful, or bored and restricted?",
+        "In a high-stakes meeting, are you the one pitching the vision, or the one taking notes?",
+        "Would you prefer 8 hours with technical manuals or a canvas and paint?",
+        "Do you want to see the 'Big Picture' first, or step-by-step instructions?",
+        "Does 'ambiguity' at work give you a thrill or a headache?",
+        "Would you rather be an anonymous inventor or the famous face of a brand?",
+        "Do you check the data/facts first, or check how the team is feeling?",
+        "If you won the lottery, would you still enjoy the planning, the doing, or the selling?",
+        "Do you prefer to be judged on your individual work or your success as a leader?"
+    ]
     all_answers = data.get('answers', []) 
     
-    prompt = f"""
-    {QUESTIONS}
-    Analyze these 10 psychological career preferences: {all_answers}.
+    formatted_data = ""
+    for i in range(min(len(QUESTIONS), len(all_answers))):
+        formatted_data += f"Q: {QUESTIONS[i]} | A: {all_answers[i]}\n"
     
-    Based on these, predict the TOP 3 most suitable careers.
-    For each career, provide:
-    1. Career Name
-    2. Why it fits (based on their specific answers)
-    3. A 3-step mini roadmap to get started.
-    
-    Format the response clearly using Markdown (bold titles and bullet points).
-    """
+    prompt = f"<s>[INST] You are a Career Coach. Analyze these answers:\n{formatted_data}\nPredict TOP 3 careers with roadmaps. Use Markdown. [/INST]"
 
     try:
-        response = client.models.generate_content(
-            model="gemini-1.5-flash", 
-            contents=prompt
-        )
-        return {"analysis": response.text}
-    # except Exception as exc:
-    #     print(f"REAL ERROR: {exc}") # This will show the error in your terminal
-    #     raise HTTPException(
-    #         status_code=503,
-    #         detail=(
-    #             "AI backend unavailable. "
-    #             "Please verify your Google GenAI quota/API key or try again later."
-    #         ),
-    #     )
+        response = client.text_generation(prompt, max_new_tokens=1000)
+        return {"analysis": response}
     except Exception as exc:
-        print(f"REAL ERROR: {exc}") # This will show the error in your terminal
-        raise HTTPException(status_code=500, detail=str(exc))
-
+        print(f"REAL ERROR: {exc}")
+        raise HTTPException(status_code=500, detail="The AI is sleeping. Try again in 1 minute.")
 
 if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(
-        app,
-        host="127.0.0.1",
-        port=8000,
-        reload=False,
-    )
+    uvicorn.run(app, host="127.0.0.1", port=8000)
