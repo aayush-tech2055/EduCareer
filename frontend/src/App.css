@@ -1,0 +1,41 @@
+.main-container {
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 20px;
+  font-family: sans-serif;
+  text-align: center;
+}
+
+.input-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.predict-btn {
+  background-color: #007bff;
+  color: white;
+  padding: 15px 30px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.predict-btn:disabled {
+  background-color: #ccc;
+}
+
+.result-card {
+  background: #f8f9fa;
+  padding: 20px;
+  border-left: 5px solid #007bff;
+  margin-top: 20px;
+}
