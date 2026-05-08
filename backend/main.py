@@ -57,14 +57,18 @@ def predict(data: dict):
             contents=prompt
         )
         return {"analysis": response.text}
+    # except Exception as exc:
+    #     print(f"REAL ERROR: {exc}") # This will show the error in your terminal
+    #     raise HTTPException(
+    #         status_code=503,
+    #         detail=(
+    #             "AI backend unavailable. "
+    #             "Please verify your Google GenAI quota/API key or try again later."
+    #         ),
+    #     )
     except Exception as exc:
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "AI backend unavailable. "
-                "Please verify your Google GenAI quota/API key or try again later."
-            ),
-        )
+        print(f"REAL ERROR: {exc}") # This will show the error in your terminal
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 if __name__ == "__main__":
