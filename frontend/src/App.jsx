@@ -80,7 +80,7 @@ function App() {
     );
   }
 
-  // 2. QUIZ SCREEN
+ 
   return (
     <div className="main-container">
       <header className="header">
