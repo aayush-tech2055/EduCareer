@@ -14,7 +14,7 @@ app.add_middleware(
 )
 
 
-client = genai.Client(api_key="AIzaSyA5FSSNDhTiW1-pY16kctAi0Cxtv12EWaE")
+client = genai.Client(api_key="AIzaSyCk_W5eeoO_tKOfUl67peRZramo343gKGw")
 
 @app.get("/")
 def home():
@@ -53,7 +53,7 @@ def predict(data: dict):
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.0-flash", 
+            model="gemini-1.5-flash", 
             contents=prompt
         )
         return {"analysis": response.text}
