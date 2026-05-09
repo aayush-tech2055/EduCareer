@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import './App.css'
-
+//questions to ask
 const QUESTIONS = [
   "Problem Solving: Do you prefer technical 'fixing' (restoring objects/code) or social 'fixing' (resolving human conflicts)?",
   "Data vs. Creativity: Does a blank, structured spreadsheet make you feel powerful, or does a blank creative canvas excite you more?",
@@ -64,7 +64,7 @@ function App() {
     }
   };
 
-  // --- 1. HOME / LANDING VIEW ---
+  // home page
   if (gameState === "home") {
     return (
       <div className="app-canvas">
@@ -98,7 +98,7 @@ function App() {
     );
   }
 
-  // --- 2. RESULT / CELEBRATION VIEW ---
+  // result page
   if (gameState === "result") {
     return (
       <div className="app-canvas result-canvas">
@@ -131,7 +131,7 @@ function App() {
     );
   }
 
-  // --- 3. QUIZ VIEW ---
+ // quiz wala page
   return (
     <div className="app-canvas">
       <div className="quiz-container fade-in">
