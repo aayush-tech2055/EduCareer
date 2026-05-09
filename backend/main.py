@@ -11,16 +11,21 @@ load_dotenv(env_path)
 app = FastAPI()
 
 
+origins = [
+    "http://localhost:5173",                     
+    "https://edu-career-mu.vercel.app/",      
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=origins,           
     allow_credentials=True,
     allow_methods=["*"], 
     allow_headers=["*"],
 )
 
 
-# GROQ_API_KEY` from .env when running locally
+# GROQ_API_KEY from .env when running locally
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 if not GROQ_API_KEY:
     raise RuntimeError("GROQ_API_KEY environment variable is required")
@@ -48,7 +53,7 @@ def predict(data: dict):
 
     all_answers = data.get('answers', []) 
     
-    # Construct the prompt
+    # this is  my demo  prompt
     prompt = f"""
     Analyze these 10 psychological career preferences: {all_answers}.
     
