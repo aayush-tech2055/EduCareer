@@ -4,13 +4,13 @@ from groq import Groq
 from dotenv import load_dotenv
 import os
 
-# Load environment variables from backend/.env when running locally
+
 env_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(env_path)
 
 app = FastAPI()
 
-# Enable CORS for your React frontend
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -19,8 +19,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Groq Client
-# Load `GROQ_API_KEY` from .env when running locally
+
+# GROQ_API_KEY` from .env when running locally
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 if not GROQ_API_KEY:
     raise RuntimeError("GROQ_API_KEY environment variable is required")
