@@ -1,13 +1,16 @@
-import os
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware 
-from google import genai
-import uvicorn
+from groq import Groq
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from backend/.env when running locally
+env_path = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(env_path)
 
 app = FastAPI()
 
-# Enable CORS so your React app can talk to this backend
+# Enable CORS for your React frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -16,77 +19,68 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- CONFIGURATION ---
-# 1) Store your Google Gemini API key securely in the environment.
-#    Example: export GEMINI_API_KEY="your-secret-key"
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-if not GEMINI_API_KEY:
-    raise RuntimeError("GEMINI_API_KEY environment variable is required")
+# Initialize Groq Client
+# Load `GROQ_API_KEY` from .env when running locally
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+if not GROQ_API_KEY:
+    raise RuntimeError("GROQ_API_KEY environment variable is required")
 
-# Initialize the Google GenAI Client
-client = genai.Client(api_key=GEMINI_API_KEY)
+client = Groq(api_key=GROQ_API_KEY)
 
 @app.get("/")
 def home():
-    return {"status": "Career Chef API is Online"}
+    return {"message": "The Career Chef is ready (Powered by Groq)!"}
 
 @app.post("/predict")
-async def predict(data: dict):
-    all_answers = data.get('answers', [])
-    
-    # Highly elaborative scenarios for deep AI context
+def predict(data: dict):
     QUESTIONS = [
-        "Problem Solving: Do you prefer technical 'fixing' (restoring objects/code) or social 'fixing' (resolving human conflicts)?",
-        "Data vs. Creativity: Does a blank, structured spreadsheet make you feel powerful, or does a blank creative canvas excite you more?",
-        "Leadership Style: In a crisis, do you naturally pitch the vision and lead, or do you prefer to document details and ensure accuracy?",
-        "Deep Focus: Would you rather spend 8 hours mastering a technical manual or 8 hours using artistic tools to express an idea?",
-        "Information Processing: Do you need to see the 'Big Picture' vision first, or do you prefer starting with step-by-step instructions?",
-        "Risk Tolerance: Does a job with no clear rules and high ambiguity feel like a thrilling challenge or a stressful headache?",
-        "Recognition: Would you rather be the anonymous inventor of a product or the famous face and spokesperson of a brand?",
-        "Decision Making: Do you prioritize objective data/facts first, or do you prioritize how a decision impacts the team's feelings?",
-        "Phase Preference: Do you find more joy in the Planning (strategy), the Doing (building), or the Selling (persuading) phase?",
-        "Success Metric: Do you want to be judged on your high-quality individual output or your ability to lead a team to a goal?"
+        "Would you rather fix a broken physical object, or a broken relationship between two people?",
+        "Does a blank spreadsheet make you feel organized and powerful, or bored and restricted?",
+        "In a high-stakes meeting, are you the one pitching the vision, or the one taking notes?",
+        "Would you prefer 8 hours with technical manuals or a canvas and paint?",
+        "Do you want to see the 'Big Picture' first, or step-by-step instructions?",
+        "Does 'ambiguity' at work give you a thrill or a headache?",
+        "Would you rather be an anonymous inventor or the famous face of a brand?",
+        "Do you check the data/facts first, or check how the team is feeling?",
+        "If you won the lottery, would you still enjoy the planning, the doing, or the selling?",
+        "Do you prefer to be judged on your individual work or your success as a leader?"
     ]
 
-    # Combine questions and user answers into a psychometric profile
-    user_profile = ""
-    for q, a in zip(QUESTIONS, all_answers):
-        user_profile += f"SCENARIO: {q}\nUSER CHOICE: {a}\n\n"
-
-    # The 'Career Architect' Prompt
-    prompt = f"""
-    You are an expert Career Psychologist. Analyze this behavioral profile:
+    all_answers = data.get('answers', []) 
     
-    {user_profile}
-
-    TASK:
-    1. Identify the user's 'Career Archetype' (e.g., The Digital Architect, The Empathetic Strategist).
-    2. Recommend the TOP 3 Careers that perfectly balance their choices.
-    3. For each career, provide:
-       - **Why it matches**: Connect it to specific scenario answers.
-       - **3-Step Roadmap**: Actionable steps to enter this field.
-
-    Format the response in clean, professional Markdown with bold headings.
+    # Construct the prompt
+    prompt = f"""
+    Analyze these 10 psychological career preferences: {all_answers}.
+    
+    Based on these, predict the TOP 3 most suitable careers.
+    For each career, provide:
+    1. Career Name
+    2. Why it fits (based on their specific answers)
+    3. A 3-step mini roadmap to get started.
+    
+    Format the response clearly using Markdown (bold titles and bullet points).
     """
 
     try:
-        # Using Gemini 1.5 Flash - optimized for 2026 speed and accuracy
-        response = client.models.generate_content(
-            model="gemini-1.5-flash",
-            contents=prompt
+      
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are an expert career counselor and psychologist."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
         )
         
-        if not response.text:
-            raise Exception("AI returned empty content")
+        return {"analysis": completion.choices[0].message.content}
 
-        return {"analysis": response.text}
-
-    except Exception as e:
-        print(f"Gemini Error: {e}")
-        # Standard rate-limit safety
-        if "429" in str(e):
-            raise HTTPException(status_code=429, detail="AI is over-capacity. Please wait 60 seconds.")
-        raise HTTPException(status_code=500, detail="Career analysis failed. Verify your API key.")
+    except Exception as exc:
+        print(f"Error: {exc}")
+        raise HTTPException(
+            status_code=503,
+            detail="The AI is sleeping. Try again in a minute."
+        )
 
 if __name__ == "__main__":
+    import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
